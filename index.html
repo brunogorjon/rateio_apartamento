@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora de Rateio do Apartamento</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg:#0b1120; --card:#111827; --card-2:#0f172a; --text:#e5e7eb; --muted:#94a3b8; --line:#273449;
+      --primary:#60a5fa; --primary-strong:#2563eb; --primary-soft:#10264a;
+      --ok:#4ade80; --ok-soft:#102a1d; --warn:#fbbf24; --warn-soft:#33260b;
+      --danger:#f87171; --danger-soft:#35171b; --credit:#c084fc; --credit-soft:#291643;
+      --shadow:0 14px 35px rgba(0,0,0,.24); --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html{background:var(--bg)}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(circle at 15% -10%,#172554 0,transparent 31%),var(--bg);color:var(--text);min-height:100vh}
+    button,input,select{font:inherit;color:inherit}
+    button{cursor:pointer}
+    .app{max-width:1380px;margin:0 auto;padding:24px}
+    .topbar{display:flex;gap:18px;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap}
+    .title h1{margin:0 0 6px;font-size:28px;letter-spacing:-.03em;color:#f8fafc}.title p{margin:0;color:var(--muted)}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:#172033;color:var(--text);padding:10px 14px;border-radius:10px;font-weight:700;transition:.18s ease}.btn:hover{background:#1d2940;border-color:#3a4a63;transform:translateY(-1px)}
+    .btn.primary{background:var(--primary-strong);color:white;border-color:#3b82f6}.btn.primary:hover{background:#1d4ed8}.btn.danger{color:#fca5a5;border-color:#7f343b;background:#24151a}.btn.danger:hover{background:#35171b}.btn.ghost{background:transparent}.btn.small{padding:7px 10px;font-size:13px}.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+    .summary{display:grid;grid-template-columns:repeat(6,minmax(150px,1fr));gap:12px;margin-bottom:18px}.metric{background:linear-gradient(180deg,#131d2f,var(--card));border:1px solid var(--line);border-radius:14px;padding:15px;box-shadow:var(--shadow)}.metric .label{font-size:12px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.04em}.metric .value{font-size:22px;font-weight:800;margin-top:5px;color:#f8fafc}.metric .sub{font-size:12px;color:var(--muted);margin-top:4px}
+    .tabs{display:flex;gap:8px;border-bottom:1px solid var(--line);margin-bottom:18px}.tab{border:0;background:transparent;padding:11px 14px;font-weight:800;color:var(--muted);border-bottom:3px solid transparent}.tab:hover{color:#cbd5e1}.tab.active{color:#93c5fd;border-color:var(--primary)}
+    .panel{display:none}.panel.active{display:block}
+    .section-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:8px 0 12px}.section-head h2{margin:0;font-size:20px;color:#f8fafc}.hint{color:var(--muted);font-size:13px}
+    .months{display:grid;gap:14px}.month-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+    .month-head{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line);background:#0f172a}.month-title{font-size:18px;font-weight:850;color:#f8fafc}.month-title span{font-size:12px;color:var(--muted);font-weight:700;margin-left:8px}.month-stats{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:#cbd5e1}.month-stats b{display:block;font-size:15px;margin-top:2px;color:#f8fafc}
+    .table-wrap{overflow:auto}.table{width:100%;border-collapse:collapse;min-width:820px}.table th,.table td{padding:12px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}.table th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:#101827}.table tbody tr{transition:background .15s ease}.table tbody tr:hover{background:#141f32}.table tr:last-child td{border-bottom:0}.person-name{font-weight:800;color:#f1f5f9}.muted{color:var(--muted)}
+    .money{font-variant-numeric:tabular-nums;font-weight:800}.money.credit{color:var(--credit)}.money.ok{color:var(--ok)}.money.warn{color:var(--warn)}
+    .badge{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 8px;font-size:12px;font-weight:800;border:1px solid transparent}.badge.ok{background:var(--ok-soft);color:var(--ok);border-color:#1e5635}.badge.warn{background:var(--warn-soft);color:var(--warn);border-color:#66501a}.badge.credit{background:var(--credit-soft);color:var(--credit);border-color:#513078}.badge.muted{background:#1b2638;color:#a7b3c4;border-color:#334155}.badge.danger{background:var(--danger-soft);color:var(--danger);border-color:#6b2b32}
+    .row-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+    .people-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:14px}.person-card{background:linear-gradient(180deg,#131d2f,var(--card));border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}.person-card h3{margin:0 0 4px;color:#f8fafc}.person-meta{font-size:13px;color:var(--muted);margin-bottom:14px}.person-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}.mini{background:var(--card-2);border:1px solid #223049;border-radius:10px;padding:10px}.mini span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;font-weight:800}.mini b{display:block;margin-top:4px;font-size:15px;color:#f8fafc}
+    .timeline{display:grid;gap:7px;margin-top:12px}.timeline-row{display:flex;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid var(--line);background:#0f172a;border-radius:9px;font-size:13px}.timeline-row b{font-variant-numeric:tabular-nums;color:#f8fafc}
+    .settings-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;max-width:900px;box-shadow:var(--shadow)}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(220px,1fr));gap:14px}.field label{display:block;font-size:12px;font-weight:850;color:var(--muted);margin-bottom:6px}.field input,.field select{width:100%;border:1px solid #354258;border-radius:9px;padding:10px 11px;background:#0f172a;color:#f1f5f9}.field input::placeholder{color:#64748b}.field input:focus,.field select:focus{outline:2px solid rgba(96,165,250,.35);border-color:var(--primary)}
+    .month-config{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}.month-config-row{display:grid;grid-template-columns:1fr 170px;gap:12px;align-items:center;margin-bottom:8px}.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+    .alert{border-radius:12px;padding:12px 14px;margin:0 0 14px;border:1px solid}.alert.warn{background:var(--warn-soft);border-color:#72591c;color:#fde68a}.alert.danger{background:var(--danger-soft);border-color:#71323a;color:#fecaca}.alert.ok{background:var(--ok-soft);border-color:#235f3b;color:#bbf7d0}.alert.info{background:var(--primary-soft);border-color:#264b7b;color:#bfdbfe}
+    .settlements{display:grid;gap:8px;margin-top:12px}.settlement-row{display:flex;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#0f172a}.settlement-row b{color:var(--credit)}
+    dialog{border:1px solid var(--line);border-radius:18px;padding:0;max-width:min(720px,calc(100vw - 28px));width:100%;box-shadow:0 30px 80px rgba(0,0,0,.55);background:var(--card);color:var(--text)}dialog::backdrop{background:rgba(2,6,23,.78);backdrop-filter:blur(3px)}.modal{padding:20px}.modal-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:16px}.modal-head h3{margin:0;font-size:20px;color:#f8fafc}.icon-btn{border:1px solid var(--line);background:#1b2638;color:#cbd5e1;border-radius:8px;width:34px;height:34px;font-size:18px}.icon-btn:hover{background:#253249}.modal .form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.simulation{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}.sim-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.sim-box{background:#0f172a;border:1px solid #223049;border-radius:10px;padding:10px}.sim-box span{display:block;font-size:11px;color:var(--muted);font-weight:800;text-transform:uppercase}.sim-box b{display:block;margin-top:4px;color:#f8fafc}.payment-list{display:grid;gap:8px;margin-top:14px}.payment-item{display:flex;justify-content:space-between;gap:10px;align-items:center;border:1px solid var(--line);background:#0f172a;border-radius:10px;padding:10px}.payment-item small{color:var(--muted)}
+    .footer-note{color:var(--muted);font-size:12px;margin-top:18px;text-align:center;padding-bottom:10px}
+    .hidden{display:none!important}
+    .sync-pill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:#0f172a;color:#cbd5e1;border-radius:999px;padding:8px 11px;font-size:12px;font-weight:800}.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}.sync-pill.online .sync-dot{background:var(--ok);box-shadow:0 0 0 4px rgba(74,222,128,.08)}.sync-pill.saving .sync-dot{background:var(--warn)}.sync-pill.error .sync-dot{background:var(--danger)}
+    .auth-gate{position:fixed;inset:0;z-index:100;background:radial-gradient(circle at 20% 0,#172554 0,transparent 34%),rgba(5,10,20,.98);display:flex;align-items:center;justify-content:center;padding:20px}.auth-card{width:min(460px,100%);background:linear-gradient(180deg,#131d2f,var(--card));border:1px solid var(--line);border-radius:20px;padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.5)}.auth-card h2{margin:0 0 8px;color:#f8fafc}.auth-card p{color:var(--muted);line-height:1.5}.auth-message{margin-top:12px;font-size:13px}.cloud-note{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:12px;margin-top:12px}
+    ::selection{background:#1d4ed8;color:white}
+    ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-track{background:#0b1120}::-webkit-scrollbar-thumb{background:#334155;border-radius:999px;border:2px solid #0b1120}::-webkit-scrollbar-thumb:hover{background:#475569}
+    @media(max-width:1000px){.summary{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:680px){.app{padding:14px}.summary{grid-template-columns:repeat(2,1fr)}.form-grid,.modal .form-grid{grid-template-columns:1fr}.month-config-row{grid-template-columns:1fr}.person-kpis{grid-template-columns:1fr 1fr}.sim-grid{grid-template-columns:1fr}.title h1{font-size:24px}}
+  </style>
+</head>
+<body>
+<section class="auth-gate hidden" id="authGate">
+  <div class="auth-card">
+    <h2>Acessar rateio compartilhado</h2>
+    <p>Digite um e-mail autorizado. Você receberá um link de acesso e, depois do login, verá os mesmos dados que o restante do grupo.</p>
+    <div class="field"><label>E-mail</label><input id="authEmail" type="email" autocomplete="email" placeholder="seu@email.com" /></div>
+    <button class="btn primary" id="btnMagicLink" style="width:100%;margin-top:12px">Enviar link de acesso</button>
+    <div class="auth-message" id="authMessage"></div>
+    <div class="cloud-note">🔒 Somente e-mails autorizados pelas regras do banco conseguem acessar os dados.</div>
+  </div>
+</section>
+<div class="app">
+  <div class="topbar">
+    <div class="title">
+      <h1>Rateio do Apartamento</h1>
+      <p>Pagamentos apenas atualizam o status. As parcelas só são recalculadas quando entra/é alterado um participante ou a configuração.</p>
+    </div>
+    <div class="actions">
+      <div class="sync-pill" id="syncStatus"><span class="sync-dot"></span><span id="syncStatusText">Iniciando…</span></div>
+      <button class="btn ghost hidden" id="btnLogout">Sair</button>
+      <button class="btn primary" id="btnAddParticipant">+ Adicionar pessoa</button>
+      <button class="btn" id="btnExport">Exportar backup</button>
+      <button class="btn" id="btnImport">Importar backup</button>
+      <input type="file" id="fileImport" accept="application/json,.json" class="hidden" />
+    </div>
+  </div>
+
+  <div id="globalAlerts"></div>
+  <section class="summary" id="summary"></section>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="months">Por mês</button>
+    <button class="tab" data-tab="people">Por participante</button>
+    <button class="tab" data-tab="settings">Configurações</button>
+  </nav>
+
+  <section class="panel active" id="panel-months">
+    <div class="section-head">
+      <div><h2>Controle mensal</h2><div class="hint">As parcelas ficam congeladas. Registrar um pagamento não altera o valor das outras pessoas.</div></div>
+    </div>
+    <div class="months" id="monthsContainer"></div>
+  </section>
+
+  <section class="panel" id="panel-people">
+    <div class="section-head">
+      <div><h2>Participantes</h2><div class="hint">A cota final é igual para todos; apenas o ritmo de pagamento muda.</div></div>
+    </div>
+    <div id="settlementArea"></div>
+    <div class="people-grid" id="peopleContainer"></div>
+  </section>
+
+  <section class="panel" id="panel-settings">
+    <div class="section-head"><div><h2>Configurações</h2><div class="hint">A soma dos compromissos mensais deve ser igual ao valor total do apartamento.</div></div></div>
+    <div class="settings-card">
+      <div class="form-grid">
+        <div class="field"><label>Valor total do apartamento</label><input id="cfgTotal" inputmode="decimal" /></div>
+        <div class="field"><label>Capacidade máxima</label><input id="cfgCapacity" type="number" min="1" max="100" /></div>
+      </div>
+      <div class="month-config" id="monthConfig"></div>
+      <div class="form-actions">
+        <button class="btn danger" id="btnReset">Limpar e restaurar padrão</button>
+        <button class="btn primary" id="btnSaveSettings">Salvar configurações</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="footer-note" id="footerNote">No modo compartilhado, o Supabase é a fonte oficial. Este navegador mantém apenas uma cópia local de segurança.</div>
+</div>
+
+<dialog id="participantDialog">
+  <div class="modal">
+    <div class="modal-head"><h3 id="participantDialogTitle">Adicionar participante</h3><button class="icon-btn" data-close="participantDialog">×</button></div>
+    <input type="hidden" id="participantId" />
+    <div class="form-grid">
+      <div class="field"><label>Nome</label><input id="participantName" maxlength="60" placeholder="Ex.: Maria" /></div>
+      <div class="field"><label>Começa a pagar</label><select id="participantStart"></select></div>
+      <div class="field"><label>Último mês de pagamento</label><select id="participantEnd"></select></div>
+    </div>
+    <div id="participantPaymentsWarning" class="alert warn hidden" style="margin-top:14px"></div>
+    <div class="form-actions">
+      <button class="btn danger hidden" id="btnDeleteParticipant">Excluir participante</button>
+      <button class="btn" id="btnSimulateParticipant">Simular</button>
+      <button class="btn primary" id="btnSaveParticipant">Salvar</button>
+    </div>
+    <div class="simulation hidden" id="simulationArea"></div>
+  </div>
+</dialog>
+
+<dialog id="paymentDialog">
+  <div class="modal">
+    <div class="modal-head"><h3 id="paymentDialogTitle">Registrar pagamento</h3><button class="icon-btn" data-close="paymentDialog">×</button></div>
+    <input type="hidden" id="paymentParticipantId" /><input type="hidden" id="paymentMonthId" />
+    <div class="form-grid">
+      <div class="field"><label>Valor pago agora</label><input id="paymentAmount" inputmode="decimal" /></div>
+      <div class="field"><label>Observação</label><input id="paymentNote" maxlength="100" placeholder="Opcional" /></div>
+    </div>
+    <div class="form-actions"><button class="btn primary" id="btnSavePayment">Registrar pagamento</button></div>
+    <div id="paymentHistory"></div>
+  </div>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./config.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  const STORAGE_KEY = 'rateio_apartamento_v1';
+  const MONTHS_DEFAULT = [
+    { id:'set', label:'Setembro', subtitle:'Entrada', dueCents:50000 },
+    { id:'out', label:'Outubro', subtitle:'', dueCents:90000 },
+    { id:'nov', label:'Novembro', subtitle:'', dueCents:90000 },
+    { id:'dez', label:'Dezembro', subtitle:'', dueCents:90000 },
+    { id:'jan', label:'Janeiro', subtitle:'', dueCents:90000 },
+    { id:'fev', label:'Fevereiro', subtitle:'', dueCents:90000 }
+  ];
+
+  const uid = (prefix='id') => `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`;
+  const clone = obj => JSON.parse(JSON.stringify(obj));
+  const escapeHtml = str => String(str ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+  const fmt = cents => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format((Number(cents)||0)/100);
+  const toCents = value => {
+    let s = String(value ?? '').trim().replace(/R\$/gi,'').replace(/\s/g,'');
+    if (!s) return 0;
+    if (s.includes(',') && s.includes('.')) s = s.replace(/\./g,'').replace(',','.');
+    else if (s.includes(',')) s = s.replace(',','.');
+    const n = Number(s);
+    return Number.isFinite(n) ? Math.round(n*100) : 0;
+  };
+  const centsInput = cents => ((Number(cents)||0)/100).toFixed(2).replace('.',',');
+
+  function defaultState(){
+    const now = new Date().toISOString();
+    return {
+      version:1,
+      apartment:{ totalCents:500000, capacity:10 },
+      months:clone(MONTHS_DEFAULT),
+      participants:Array.from({length:7},(_,i)=>({
+        id:uid('p'), name:`Pessoa ${i+1}`, startMonthId:'set', endMonthId:'fev', active:true, createdAt:now
+      })),
+      payments:[]
+    };
+  }
+
+  function normalizeState(raw){
+    if (!raw || typeof raw !== 'object') return defaultState();
+    const s = clone(raw);
+    s.version = 1;
+    s.apartment = s.apartment || {totalCents:500000,capacity:10};
+    s.apartment.totalCents = Math.max(0, Math.round(Number(s.apartment.totalCents)||0));
+    s.apartment.capacity = Math.max(1, Math.round(Number(s.apartment.capacity)||10));
+    s.months = Array.isArray(s.months) && s.months.length ? s.months : clone(MONTHS_DEFAULT);
+    s.months = s.months.map((m,i)=>({id:String(m.id||`m${i}`),label:String(m.label||`Mês ${i+1}`),subtitle:String(m.subtitle||''),dueCents:Math.max(0,Math.round(Number(m.dueCents)||0))}));
+    s.participants = Array.isArray(s.participants) ? s.participants : [];
+    s.participants = s.participants.map((p,i)=>({
+      id:String(p.id||uid('p')), name:String(p.name||`Pessoa ${i+1}`), startMonthId:String(p.startMonthId||s.months[0].id),
+      endMonthId:String(p.endMonthId||s.months[s.months.length-1].id), active:p.active!==false, createdAt:p.createdAt||new Date().toISOString()
+    }));
+    s.payments = Array.isArray(s.payments) ? s.payments : [];
+    s.payments = s.payments.map(x=>({id:String(x.id||uid('pay')),participantId:String(x.participantId),monthId:String(x.monthId),amountCents:Math.max(0,Math.round(Number(x.amountCents)||0)),paidAt:x.paidAt||new Date().toISOString(),note:String(x.note||'')}));
+    return s;
+  }
+
+  const storage = {
+    get(){ try { return window.localStorage.getItem(STORAGE_KEY); } catch { return null; } },
+    set(value){ try { window.localStorage.setItem(STORAGE_KEY, value); return true; } catch { return false; } }
+  };
+
+  const config = window.RATEIO_CONFIG || {};
+  const remote = {
+    enabled:false, client:null, groupId:String(config.groupId||'apartamento-praia-2026'),
+    revision:null, loaded:false, user:null, channel:null, saving:false
+  };
+
+  let state;
+  const stored = storage.get();
+  try { state = stored ? normalizeState(JSON.parse(stored)) : defaultState(); }
+  catch { state = defaultState(); }
+  if (!stored) storage.set(JSON.stringify(state));
+
+  const cloneState = () => clone(state);
+  function saveLocalCache(snapshot=state){ storage.set(JSON.stringify(snapshot)); }
+
+  function hasRemoteConfig(){
+    return /^https:\/\/.+\.supabase\.co$/i.test(String(config.supabaseUrl||''))
+      && String(config.supabasePublishableKey||'').length>20
+      && !String(config.supabasePublishableKey||'').includes('COLE_')
+      && !String(config.supabaseUrl||'').includes('SEU-PROJETO');
+  }
+
+  function setSyncStatus(text,kind=''){
+    const pill=document.getElementById('syncStatus'), label=document.getElementById('syncStatusText');
+    if(!pill||!label)return;
+    pill.classList.remove('online','saving','error');
+    if(kind)pill.classList.add(kind);
+    label.textContent=text;
+  }
+
+  function showAuth(message='',isError=false){
+    document.getElementById('authGate').classList.remove('hidden');
+    const msg=document.getElementById('authMessage');
+    msg.textContent=message; msg.style.color=isError?'#fca5a5':'#bfdbfe';
+  }
+  function hideAuth(){ document.getElementById('authGate').classList.add('hidden'); }
+
+  async function loadRemoteState({allowLocalMigration=true}={}){
+    setSyncStatus('Carregando nuvem…','saving');
+    const {data,error}=await remote.client.from('rateio_groups').select('id,data,revision,updated_at').eq('id',remote.groupId).maybeSingle();
+    if(error){ setSyncStatus('Erro de sincronização','error'); showAuth('Não foi possível carregar os dados: '+error.message,true); return false; }
+    if(!data){
+      setSyncStatus('Sem acesso','error');
+      showAuth('Seu login funcionou, mas este e-mail não está autorizado para este grupo.',true);
+      return false;
+    }
+    remote.revision=Number(data.revision||0);
+    const blank=!data.data || (typeof data.data==='object' && Object.keys(data.data).length===0);
+    if(blank){
+      let initial=null;
+      if(allowLocalMigration && stored){
+        try{ const local=normalizeState(JSON.parse(storage.get())); if(local.participants.length || local.payments.length) initial=local; }catch{}
+      }
+      state=initial || defaultState();
+      remote.loaded=true;
+      const ok=await persistState({quiet:true});
+      if(!ok)return false;
+    } else {
+      state=normalizeState(data.data);
+      remote.loaded=true;
+      saveLocalCache();
+    }
+    hideAuth();
+    document.getElementById('btnLogout').classList.remove('hidden');
+    setSyncStatus('Sincronizado','online');
+    render();
+    subscribeRealtime();
+    return true;
+  }
+
+  async function persistState({quiet=false}={}){
+    const snapshot=cloneState();
+    if(!remote.enabled){ saveLocalCache(snapshot); return true; }
+    if(!remote.loaded){ if(!quiet) alert('A conexão com o banco ainda não está pronta.'); return false; }
+    if(remote.saving){ if(!quiet) alert('Já existe uma alteração sendo salva. Tente novamente em instantes.'); return false; }
+    remote.saving=true; setSyncStatus('Salvando…','saving');
+    const expected=remote.revision;
+    const {data,error}=await remote.client.from('rateio_groups')
+      .update({data:snapshot})
+      .eq('id',remote.groupId).eq('revision',expected)
+      .select('id,data,revision,updated_at').maybeSingle();
+    remote.saving=false;
+    if(error){
+      setSyncStatus('Erro ao salvar','error');
+      if(!quiet) alert('Não foi possível salvar na nuvem: '+error.message);
+      return false;
+    }
+    if(!data){
+      setSyncStatus('Conflito detectado','error');
+      if(!quiet) alert('Outra pessoa alterou os dados antes de você. A versão mais nova será recarregada para evitar sobrescrever mudanças.');
+      setTimeout(()=>loadRemoteState({allowLocalMigration:false}),0);
+      return false;
+    }
+    remote.revision=Number(data.revision||expected+1);
+    saveLocalCache(snapshot);
+    setSyncStatus('Sincronizado','online');
+    return true;
+  }
+
+  function subscribeRealtime(){
+    if(!remote.enabled || !remote.loaded)return;
+    if(remote.channel) remote.client.removeChannel(remote.channel);
+    remote.channel=remote.client.channel('rateio-'+remote.groupId)
+      .on('postgres_changes',{event:'UPDATE',schema:'public',table:'rateio_groups',filter:`id=eq.${remote.groupId}`},payload=>{
+        const incoming=payload.new||{};
+        const rev=Number(incoming.revision||0);
+        if(rev>Number(remote.revision||0)){
+          remote.revision=rev;
+          state=normalizeState(incoming.data);
+          saveLocalCache();
+          render();
+          setSyncStatus('Atualizado pelo grupo','online');
+          setTimeout(()=>setSyncStatus('Sincronizado','online'),1800);
+        }
+      }).subscribe(status=>{
+        if(status==='SUBSCRIBED') setSyncStatus('Sincronizado','online');
+      });
+  }
+
+  async function sendMagicLink(){
+    const email=document.getElementById('authEmail').value.trim().toLowerCase();
+    if(!email){ showAuth('Informe seu e-mail.',true); return; }
+    const btn=document.getElementById('btnMagicLink'); btn.disabled=true; btn.textContent='Enviando…';
+    const redirectTo=window.location.origin+window.location.pathname;
+    const {error}=await remote.client.auth.signInWithOtp({email,options:{emailRedirectTo:redirectTo}});
+    btn.disabled=false; btn.textContent='Enviar link de acesso';
+    if(error) showAuth('Não foi possível enviar o link: '+error.message,true);
+    else showAuth('Link enviado. Abra o e-mail neste dispositivo e clique no acesso.');
+  }
+
+  async function signOut(){
+    if(remote.client) await remote.client.auth.signOut();
+    remote.user=null; remote.loaded=false;
+    if(remote.channel){ remote.client.removeChannel(remote.channel); remote.channel=null; }
+    document.getElementById('btnLogout').classList.add('hidden');
+    setSyncStatus('Desconectado','error');
+    showAuth('Sessão encerrada.');
+  }
+
+  async function initializeApp(){
+    if(!hasRemoteConfig() || !window.supabase?.createClient){
+      remote.enabled=false;
+      setSyncStatus('Modo local','error');
+      document.getElementById('footerNote').textContent='Supabase ainda não configurado. A aplicação está em modo local neste navegador.';
+      render();
+      return;
+    }
+    remote.enabled=true;
+    remote.client=window.supabase.createClient(config.supabaseUrl,config.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    const {data:{session}}=await remote.client.auth.getSession();
+    remote.client.auth.onAuthStateChange((event,sessionNow)=>{
+      if(event==='SIGNED_IN' && sessionNow?.user && !remote.loaded){
+        remote.user=sessionNow.user;
+        setTimeout(()=>loadRemoteState(),0);
+      }
+      if(event==='SIGNED_OUT'){ remote.user=null; remote.loaded=false; showAuth(); }
+    });
+    if(session?.user){ remote.user=session.user; await loadRemoteState(); }
+    else { setSyncStatus('Login necessário','error'); showAuth(); }
+  }
+  function activeParticipants(s=state){ return s.participants.filter(p=>p.active!==false); }
+  function monthIndex(s, monthId){ return s.months.findIndex(m=>m.id===monthId); }
+  function participantPaidMap(s){
+    const map = Object.fromEntries(s.participants.map(p=>[p.id,0]));
+    for(const pay of s.payments) map[pay.participantId]=(map[pay.participantId]||0)+pay.amountCents;
+    return map;
+  }
+  function monthPaidMap(s){
+    const map = Object.fromEntries(s.months.map(m=>[m.id,0]));
+    for(const pay of s.payments) map[pay.monthId]=(map[pay.monthId]||0)+pay.amountCents;
+    return map;
+  }
+  function paymentCellTotal(s,pid,mid){ return s.payments.filter(x=>x.participantId===pid&&x.monthId===mid).reduce((a,b)=>a+b.amountCents,0); }
+
+  function allocateTargets(totalCents, participants){
+    const targets = {};
+    if (!participants.length) return targets;
+    const base = Math.floor(totalCents/participants.length);
+    let rem = totalCents - base*participants.length;
+    participants.forEach((p,i)=>{ targets[p.id] = base + (i<rem ? 1 : 0); });
+    return targets;
+  }
+
+  function weightedAllocate(total, candidates){
+    const out = Object.fromEntries(candidates.map(c=>[c.id,0]));
+    let remaining = Math.max(0, Math.round(total));
+    let pool = candidates.filter(c=>c.cap>0);
+    let guard=0;
+    while(remaining>0 && pool.length && guard++<20){
+      const sumW = pool.reduce((a,c)=>a+(c.weight>0?c.weight:1),0);
+      const proposals=[];
+      let used=0;
+      for(const c of pool){
+        const raw = remaining*((c.weight>0?c.weight:1)/sumW);
+        const capLeft = c.cap-out[c.id];
+        const floorVal = Math.min(capLeft, Math.floor(raw));
+        proposals.push({id:c.id, frac:raw-Math.floor(raw), capLeft});
+        out[c.id]+=floorVal; used+=floorVal;
+      }
+      remaining-=used;
+      if(remaining<=0) break;
+      const order = proposals.sort((a,b)=>b.frac-a.frac);
+      let progressed=false;
+      for(const pr of order){
+        if(remaining<=0) break;
+        const c=pool.find(x=>x.id===pr.id);
+        if(out[pr.id] < c.cap){ out[pr.id]++; remaining--; progressed=true; }
+      }
+      pool=pool.filter(c=>out[c.id]<c.cap);
+      if(!progressed && used===0) break;
+    }
+    return out;
+  }
+
+  function buildSchedule(s){
+    const participants=activeParticipants(s);
+    const schedule={};
+    participants.forEach(p=>schedule[p.id]={});
+    const warnings=[];
+
+    const startIdx=Object.fromEntries(participants.map(p=>[p.id,monthIndex(s,p.startMonthId)]));
+    const endIdx=Object.fromEntries(participants.map(p=>[p.id,monthIndex(s,p.endMonthId)]));
+
+    // A parcela é uma obrigação congelada. Só um evento de entrada/alteração de participante
+    // recalcula o mês de início daquele participante e os meses seguintes.
+    for(let eventMonth=0; eventMonth<s.months.length; eventMonth++){
+      const entrants=participants.filter(p=>startIdx[p.id]===eventMonth);
+      if(!entrants.length) continue;
+
+      const group=participants.filter(p=>startIdx[p.id]>=0 && startIdx[p.id]<=eventMonth);
+      const targets=allocateTargets(s.apartment.totalCents,group);
+
+      // Apaga apenas a projeção do mês do evento para frente. O passado fica congelado.
+      for(const p of group){
+        for(let mi=eventMonth;mi<s.months.length;mi++) delete schedule[p.id][s.months[mi].id];
+      }
+
+      const balances={};
+      for(const p of group){
+        let frozenBefore=0;
+        for(let mi=0;mi<eventMonth;mi++) frozenBefore+=schedule[p.id][s.months[mi].id]||0;
+        balances[p.id]=Math.max(0,(targets[p.id]||0)-frozenBefore);
+      }
+
+      let cashCarry=0;
+      for(let mi=0;mi<eventMonth;mi++){
+        const monthScheduled=group.reduce((sum,p)=>sum+(schedule[p.id][s.months[mi].id]||0),0);
+        cashCarry += monthScheduled - s.months[mi].dueCents;
+      }
+
+      for(let mi=eventMonth;mi<s.months.length;mi++){
+        const m=s.months[mi];
+        const eligible=group.filter(p=>balances[p.id]>0 && mi>=Math.max(eventMonth,startIdx[p.id]) && mi<=endIdx[p.id]);
+        const forced=eligible.filter(p=>endIdx[p.id]===mi);
+        const dueNeed=Math.max(0,m.dueCents-cashCarry);
+        const forcedTotal=forced.reduce((sum,p)=>sum+balances[p.id],0);
+        const totalCapacity=eligible.reduce((sum,p)=>sum+balances[p.id],0);
+        let targetCollection=Math.min(Math.max(dueNeed,forcedTotal),totalCapacity);
+        let plannedTotal=0;
+
+        for(const p of forced){
+          const v=balances[p.id];
+          schedule[p.id][m.id]=(schedule[p.id][m.id]||0)+v;
+          balances[p.id]-=v;
+          plannedTotal+=v;
+        }
+
+        let remainder=Math.max(0,targetCollection-plannedTotal);
+        const others=eligible.filter(p=>!forced.some(f=>f.id===p.id) && balances[p.id]>0);
+        if(remainder>0 && others.length){
+          const candidates=others.map(p=>{
+            const monthsLeft=Math.max(1,endIdx[p.id]-mi+1);
+            return {id:p.id,cap:balances[p.id],weight:balances[p.id]/monthsLeft};
+          });
+          const alloc=weightedAllocate(remainder,candidates);
+          for(const p of others){
+            const v=alloc[p.id]||0;
+            if(v){
+              schedule[p.id][m.id]=(schedule[p.id][m.id]||0)+v;
+              balances[p.id]-=v;
+              plannedTotal+=v;
+            }
+          }
+        }
+
+        cashCarry += plannedTotal-m.dueCents;
+      }
+
+      for(const p of group){
+        if(balances[p.id]>0){
+          warnings.push(`${p.name} ainda tem ${fmt(balances[p.id])} sem mês disponível para pagamento.`);
+        }
+      }
+    }
+
+    return {schedule,warnings};
+  }
+
+  function computePlan(s){
+    const participants=activeParticipants(s);
+    const targets=allocateTargets(s.apartment.totalCents,participants);
+    const paidByP=participantPaidMap(s);
+    const paidByM=monthPaidMap(s);
+    const built=buildSchedule(s);
+    const plan=built.schedule;
+    const warnings=[...built.warnings];
+    const credits={};
+    const remainingBalances={};
+    const scheduledByP={};
+    const projectedCredits={};
+
+    for(const p of participants){
+      const paid=paidByP[p.id]||0;
+      const target=targets[p.id]||0;
+      const raw=target-paid;
+      remainingBalances[p.id]=Math.max(0,raw);
+      credits[p.id]=Math.max(0,-raw);
+      const scheduled=s.months.reduce((sum,m)=>sum+(plan[p.id]?.[m.id]||0),0);
+      scheduledByP[p.id]=scheduled;
+      projectedCredits[p.id]=Math.max(0,scheduled-target);
+    }
+
+    const monthInfo={};
+    let actualCash=0;
+    for(const m of s.months){
+      const confirmed=paidByM[m.id]||0;
+      const scheduled=participants.reduce((sum,p)=>sum+(plan[p.id]?.[m.id]||0),0);
+      const pending=participants.reduce((sum,p)=>{
+        const installment=plan[p.id]?.[m.id]||0;
+        const paidCell=paymentCellTotal(s,p.id,m.id);
+        return sum+Math.max(0,installment-paidCell);
+      },0);
+      actualCash += confirmed-m.dueCents;
+      monthInfo[m.id]={confirmed,scheduled,pending,due:m.dueCents,cashAfter:actualCash,shortfall:Math.max(0,-actualCash)};
+    }
+
+    const totalConfirmed=s.payments.reduce((a,b)=>a+b.amountCents,0);
+    const totalDue=s.months.reduce((a,b)=>a+b.dueCents,0);
+    const totalCredits=Object.values(credits).reduce((a,b)=>a+b,0);
+    const totalPlanned=participants.reduce((sum,p)=>sum+(scheduledByP[p.id]||0),0);
+    const finalProjectedCash=totalPlanned-totalDue;
+
+    return {participants,targets,paidByP,paidByM,credits,projectedCredits,scheduledByP,remainingBalances,plan,monthInfo,warnings,totalConfirmed,totalDue,totalCredits,totalPlanned,finalProjectedCash};
+  }
+
+  function getPlanValue(calc,pid,mid){ return calc.plan?.[pid]?.[mid]||0; }
+  function shareLabel(calc,pid){ return calc.targets[pid]||0; }
+
+  function render(){
+    const calc=computePlan(state);
+    renderSummary(calc); renderAlerts(calc); renderMonths(calc); renderPeople(calc); renderSettings();
+    window.__RATEIO_DEBUG__={state:clone(state),calc};
+  }
+
+  function renderSummary(calc){
+    const people=calc.participants.length;
+    const baseShare=people?Math.floor(state.apartment.totalCents/people):0;
+    const apartmentRemaining=Math.max(0,calc.totalDue-calc.totalConfirmed);
+    const cards=[
+      ['Valor total',fmt(state.apartment.totalCents),'Apartamento'],
+      ['Participantes',`${people} / ${state.apartment.capacity}`,'ativos'],
+      ['Cota atual',people?fmt(baseShare):fmt(0),'aprox. por pessoa'],
+      ['Já registrado',fmt(calc.totalConfirmed),'pagamentos confirmados'],
+      ['Saldo do apartamento',fmt(apartmentRemaining),'antes de compensações'],
+      ['Créditos',fmt(calc.totalCredits),'a devolver/compensar']
+    ];
+    document.getElementById('summary').innerHTML=cards.map(c=>`<div class="metric"><div class="label">${c[0]}</div><div class="value">${c[1]}</div><div class="sub">${c[2]}</div></div>`).join('');
+  }
+
+  function renderAlerts(calc){
+    const el=document.getElementById('globalAlerts');
+    const issues=[];
+    const scheduleTotal=state.months.reduce((a,m)=>a+m.dueCents,0);
+    if(scheduleTotal!==state.apartment.totalCents) issues.push(`<div class="alert danger">A soma dos meses é ${fmt(scheduleTotal)}, mas o valor do apartamento é ${fmt(state.apartment.totalCents)}. Ajuste em Configurações.</div>`);
+    if(calc.participants.length>state.apartment.capacity) issues.push(`<div class="alert danger">Há mais participantes que a capacidade configurada.</div>`);
+    calc.warnings.forEach(w=>issues.push(`<div class="alert warn">${escapeHtml(w)}</div>`));
+    if(calc.finalProjectedCash>0 && calc.totalCredits>0) issues.push(`<div class="alert info">Após quitar o apartamento, a projeção deixa ${fmt(calc.finalProjectedCash)} no caixa para compensar participantes que já pagaram acima da nova cota.</div>`);
+    el.innerHTML=issues.join('');
+  }
+
+  function renderMonths(calc){
+    const container=document.getElementById('monthsContainer');
+    container.innerHTML=state.months.map(m=>{
+      const info=calc.monthInfo[m.id]||{confirmed:0,scheduled:0,pending:0,due:m.dueCents,cashAfter:0,shortfall:0};
+      const rows=calc.participants.map(p=>{
+        const confirmed=paymentCellTotal(state,p.id,m.id);
+        const installment=getPlanValue(calc,p.id,m.id);
+        const remaining=Math.max(0,installment-confirmed);
+        const overpaid=Math.max(0,confirmed-installment);
+        const mi=monthIndex(state,m.id), a=monthIndex(state,p.startMonthId), b=monthIndex(state,p.endMonthId);
+        let status='';
+        if(installment>0 && confirmed===0) status=`<span class="badge warn">Pendente</span>`;
+        else if(installment>0 && confirmed>0 && confirmed<installment) status=`<span class="badge warn">Parcial</span>`;
+        else if(installment>0 && confirmed===installment) status=`<span class="badge ok">Pago</span>`;
+        else if(installment>0 && confirmed>installment) status=`<span class="badge credit">Pago acima</span>`;
+        else if(confirmed>0) status=`<span class="badge credit">Pagamento extra</span>`;
+        else status=`<span class="badge muted">Sem cobrança</span>`;
+        const canPay=remaining>0;
+        return `<tr>
+          <td><div class="person-name">${escapeHtml(p.name)}</div><div class="muted" style="font-size:12px">${escapeHtml(state.months[a]?.label||'')} → ${escapeHtml(state.months[b]?.label||'')}</div></td>
+          <td class="money">${installment?fmt(installment):'—'}</td>
+          <td class="money ok">${confirmed?fmt(confirmed):'—'}</td>
+          <td class="money ${remaining?'warn':''}">${remaining?fmt(remaining):'—'}</td>
+          <td>${status}${overpaid?`<div class="muted" style="font-size:11px;margin-top:4px">Excedente no mês: ${fmt(overpaid)}</div>`:''}</td>
+          <td><div class="row-actions">
+            ${canPay?`<button class="btn small primary" data-pay="${p.id}" data-month="${m.id}">Registrar pagamento</button>`:''}
+            ${confirmed?`<button class="btn small" data-history="${p.id}" data-month="${m.id}">Histórico</button>`:''}
+          </div></td>
+        </tr>`;
+      }).join('');
+      const netClass=info.shortfall?'danger':(info.cashAfter>0?'credit':'ok');
+      return `<article class="month-card">
+        <div class="month-head">
+          <div class="month-title">${escapeHtml(m.label)} ${m.subtitle?`<span>${escapeHtml(m.subtitle)}</span>`:''}</div>
+          <div class="month-stats">
+            <div>Compromisso<b>${fmt(m.dueCents)}</b></div>
+            <div>Parcelas do mês<b>${fmt(info.scheduled)}</b></div>
+            <div>Recebido<b>${fmt(info.confirmed)}</b></div>
+            <div>A receber<b>${fmt(info.pending)}</b></div>
+            <div>Caixa real após mês<b class="money ${netClass}">${fmt(info.cashAfter)}</b></div>
+          </div>
+        </div>
+        <div class="table-wrap"><table class="table"><thead><tr><th>Participante</th><th>Parcela</th><th>Pago</th><th>Falta</th><th>Status</th><th>Ações</th></tr></thead><tbody>${rows}</tbody></table></div>
+      </article>`;
+    }).join('');
+    container.querySelectorAll('[data-pay]').forEach(b=>b.addEventListener('click',()=>openPayment(b.dataset.pay,b.dataset.month,false)));
+    container.querySelectorAll('[data-history]').forEach(b=>b.addEventListener('click',()=>openPayment(b.dataset.history,b.dataset.month,true)));
+  }
+
+  function renderPeople(calc){
+    const settlement=document.getElementById('settlementArea');
+    const actualCredits=calc.participants.filter(p=>(calc.credits[p.id]||0)>0);
+    const projectedCredits=calc.participants.filter(p=>(calc.projectedCredits[p.id]||0)>0);
+    const blocks=[];
+    if(actualCredits.length){
+      blocks.push(`<div class="alert info"><b>Créditos já efetivos</b><div class="hint" style="margin-top:4px">Estas pessoas já pagaram acima da cota atual.</div><div class="settlements">${actualCredits.map(p=>`<div class="settlement-row"><span>${escapeHtml(p.name)}</span><b>A receber ${fmt(calc.credits[p.id])}</b></div>`).join('')}</div></div>`);
+    }
+    if(projectedCredits.length){
+      blocks.push(`<div class="alert info"><b>Compensações previstas pelo rateio</b><div class="hint" style="margin-top:4px">Se todas as parcelas congeladas forem pagas, estes valores representam compensações geradas por entradas tardias.</div><div class="settlements">${projectedCredits.map(p=>`<div class="settlement-row"><span>${escapeHtml(p.name)}</span><b>Crédito projetado ${fmt(calc.projectedCredits[p.id])}</b></div>`).join('')}</div></div>`);
+    }
+    settlement.innerHTML=blocks.join('');
+
+    document.getElementById('peopleContainer').innerHTML=calc.participants.map(p=>{
+      const target=calc.targets[p.id]||0, paid=calc.paidByP[p.id]||0, credit=calc.credits[p.id]||0;
+      const a=monthIndex(state,p.startMonthId), b=monthIndex(state,p.endMonthId);
+      const pendingInstallments=state.months.reduce((sum,m)=>{
+        const installment=getPlanValue(calc,p.id,m.id), confirmed=paymentCellTotal(state,p.id,m.id);
+        return sum+Math.max(0,installment-confirmed);
+      },0);
+      const timeline=state.months.map((m,mi)=>{
+        const confirmed=paymentCellTotal(state,p.id,m.id), installment=getPlanValue(calc,p.id,m.id), remaining=Math.max(0,installment-confirmed);
+        if(confirmed===0&&installment===0&&!(mi>=a&&mi<=b)) return '';
+        let txt='Sem cobrança';
+        if(installment>0){
+          txt=`Parcela ${fmt(installment)}`;
+          if(confirmed>0) txt+=` · Pago ${fmt(confirmed)}`;
+          if(remaining>0) txt+=` · Falta ${fmt(remaining)}`;
+          else if(confirmed>=installment) txt+=' · Quitado';
+        } else if(confirmed>0) txt=`Pagamento extra ${fmt(confirmed)}`;
+        return `<div class="timeline-row"><span>${escapeHtml(m.label)}</span><b>${txt}</b></div>`;
+      }).join('');
+      return `<article class="person-card">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><h3>${escapeHtml(p.name)}</h3><div class="person-meta">Paga de ${escapeHtml(state.months[a]?.label||'')} até ${escapeHtml(state.months[b]?.label||'')}</div></div><button class="btn small" data-edit-person="${p.id}">Editar</button></div>
+        <div class="person-kpis">
+          <div class="mini"><span>Cota atual</span><b>${fmt(target)}</b></div>
+          <div class="mini"><span>Já pago</span><b>${fmt(paid)}</b></div>
+          <div class="mini"><span>${credit?'Crédito atual':'Parcelas pendentes'}</span><b class="${credit?'money credit':''}">${fmt(credit||pendingInstallments)}</b></div>
+        </div>
+        ${calc.projectedCredits[p.id]?`<div class="alert info" style="padding:8px 10px;margin-bottom:10px">Crédito projetado após quitar as parcelas: <b>${fmt(calc.projectedCredits[p.id])}</b></div>`:''}
+        <div class="timeline">${timeline||'<div class="hint">Sem lançamentos.</div>'}</div>
+      </article>`;
+    }).join('');
+    document.querySelectorAll('[data-edit-person]').forEach(b=>b.addEventListener('click',()=>openParticipantDialog(b.dataset.editPerson)));
+  }
+
+  function renderSettings(){
+    document.getElementById('cfgTotal').value=centsInput(state.apartment.totalCents);
+    document.getElementById('cfgCapacity').value=state.apartment.capacity;
+    document.getElementById('monthConfig').innerHTML=`<div style="font-weight:850;margin-bottom:8px">Compromissos do apartamento</div>`+state.months.map(m=>`<div class="month-config-row"><div><b>${escapeHtml(m.label)}</b>${m.subtitle?` <span class="muted">(${escapeHtml(m.subtitle)})</span>`:''}</div><div class="field"><input data-month-due="${m.id}" inputmode="decimal" value="${centsInput(m.dueCents)}" /></div></div>`).join('');
+  }
+
+  function fillMonthSelect(select,selected){
+    select.innerHTML=state.months.map(m=>`<option value="${m.id}" ${m.id===selected?'selected':''}>${escapeHtml(m.label)}${m.subtitle?` — ${escapeHtml(m.subtitle)}`:''}</option>`).join('');
+  }
+
+  function openParticipantDialog(pid=null){
+    const dialog=document.getElementById('participantDialog');
+    const p=pid?state.participants.find(x=>x.id===pid):null;
+    document.getElementById('participantId').value=p?.id||'';
+    document.getElementById('participantDialogTitle').textContent=p?'Editar participante':'Adicionar participante';
+    document.getElementById('participantName').value=p?.name||'';
+    fillMonthSelect(document.getElementById('participantStart'),p?.startMonthId||state.months[0].id);
+    fillMonthSelect(document.getElementById('participantEnd'),p?.endMonthId||state.months[state.months.length-1].id);
+    const pays=p?state.payments.filter(x=>x.participantId===p.id):[];
+    const warn=document.getElementById('participantPaymentsWarning');
+    if(pays.length){warn.classList.remove('hidden');warn.textContent='Este participante já possui pagamentos confirmados. Alterar os meses não apaga o histórico já pago.';} else warn.classList.add('hidden');
+    const del=document.getElementById('btnDeleteParticipant');
+    del.classList.toggle('hidden',!p);
+    del.disabled=!!pays.length;
+    document.getElementById('simulationArea').classList.add('hidden');
+    dialog.showModal();
+  }
+
+  function participantDraftFromForm(){
+    const id=document.getElementById('participantId').value||uid('p');
+    const name=document.getElementById('participantName').value.trim();
+    const start=document.getElementById('participantStart').value;
+    const end=document.getElementById('participantEnd').value;
+    if(!name) throw new Error('Informe o nome da pessoa.');
+    if(monthIndex(state,start)>monthIndex(state,end)) throw new Error('O último mês não pode ser anterior ao mês inicial.');
+    return {id,name,startMonthId:start,endMonthId:end,active:true,createdAt:new Date().toISOString()};
+  }
+
+  function simulateParticipant(){
+    try{
+      const draft=participantDraftFromForm();
+      const editing=!!document.getElementById('participantId').value;
+      const temp=clone(state);
+      if(editing){ const i=temp.participants.findIndex(p=>p.id===draft.id); draft.createdAt=temp.participants[i]?.createdAt||draft.createdAt; temp.participants[i]=draft; }
+      else temp.participants.push(draft);
+      if(activeParticipants(temp).length>temp.apartment.capacity) throw new Error(`Capacidade máxima de ${temp.apartment.capacity} participantes atingida.`);
+      const before=computePlan(state), after=computePlan(temp);
+      const p=after.participants.find(x=>x.id===draft.id);
+      const schedule=temp.months.map(m=>({m,amount:getPlanValue(after,p.id,m.id)})).filter(x=>x.amount>0);
+      const html=`<h4 style="margin:0 0 10px">Simulação</h4>
+        <div class="sim-grid">
+          <div class="sim-box"><span>Participantes</span><b>${before.participants.length} → ${after.participants.length}</b></div>
+          <div class="sim-box"><span>Cota aproximada</span><b>${fmt(Math.floor(temp.apartment.totalCents/after.participants.length))}</b></div>
+          <div class="sim-box"><span>${escapeHtml(p.name)} ainda deve</span><b>${fmt(Math.max(0,(after.targets[p.id]||0)-(after.paidByP[p.id]||0)))}</b></div>
+        </div>
+        <div style="margin-top:12px;font-weight:800">Previsão para ${escapeHtml(p.name)}</div>
+        <div class="timeline">${schedule.length?schedule.map(x=>`<div class="timeline-row"><span>${escapeHtml(x.m.label)}</span><b>${fmt(x.amount)}</b></div>`).join(''):'<div class="hint">Sem parcela futura prevista.</div>'}</div>
+        ${after.credits[p.id]?`<div class="alert info" style="margin-top:12px">Crédito projetado: ${fmt(after.credits[p.id])}</div>`:''}
+        ${after.warnings.length?`<div class="alert warn" style="margin-top:12px">${after.warnings.map(escapeHtml).join('<br>')}</div>`:''}`;
+      const area=document.getElementById('simulationArea'); area.innerHTML=html; area.classList.remove('hidden');
+    }catch(e){alert(e.message);}
+  }
+
+  async function saveParticipant(){
+    try{
+      const draft=participantDraftFromForm();
+      const existingId=document.getElementById('participantId').value;
+      const before=clone(state);
+      if(existingId){
+        const i=state.participants.findIndex(p=>p.id===existingId);
+        draft.createdAt=state.participants[i].createdAt; state.participants[i]=draft;
+      } else {
+        if(activeParticipants().length>=state.apartment.capacity) throw new Error(`Capacidade máxima de ${state.apartment.capacity} participantes atingida.`);
+        state.participants.push(draft);
+      }
+      const ok=await persistState();
+      if(!ok){ state=before; render(); return; }
+      document.getElementById('participantDialog').close(); render();
+    }catch(e){alert(e.message);}
+  }
+
+  async function deleteParticipant(){
+    const id=document.getElementById('participantId').value;
+    const p=state.participants.find(x=>x.id===id); if(!p)return;
+    if(state.payments.some(x=>x.participantId===id)){alert('Não é possível excluir uma pessoa que já possui pagamentos confirmados.');return;}
+    if(confirm(`Excluir ${p.name}? Isso é uma alteração de participantes e recalculará as parcelas a partir dos eventos de entrada aplicáveis.`)){
+      const before=clone(state);
+      state.participants=state.participants.filter(x=>x.id!==id);
+      if(!(await persistState())){ state=before; render(); return; }
+      document.getElementById('participantDialog').close(); render();
+    }
+  }
+
+  function openPayment(pid,mid,historyOnly=false){
+    const calc=computePlan(state), p=state.participants.find(x=>x.id===pid), m=state.months.find(x=>x.id===mid);
+    document.getElementById('paymentParticipantId').value=pid; document.getElementById('paymentMonthId').value=mid;
+    document.getElementById('paymentDialogTitle').textContent=`${p.name} — ${m.label}`;
+    document.getElementById('paymentAmount').value=centsInput(Math.max(0,getPlanValue(calc,pid,mid)-paymentCellTotal(state,pid,mid)));
+    document.getElementById('paymentNote').value='';
+    document.getElementById('paymentAmount').closest('.form-grid').classList.toggle('hidden',historyOnly);
+    document.getElementById('btnSavePayment').classList.toggle('hidden',historyOnly);
+    renderPaymentHistory(pid,mid);
+    document.getElementById('paymentDialog').showModal();
+  }
+
+  function renderPaymentHistory(pid,mid){
+    const list=state.payments.filter(x=>x.participantId===pid&&x.monthId===mid).sort((a,b)=>String(b.paidAt).localeCompare(String(a.paidAt)));
+    const el=document.getElementById('paymentHistory');
+    if(!list.length){el.innerHTML='<div class="hint" style="margin-top:14px">Nenhum pagamento registrado neste mês.</div>';return;}
+    el.innerHTML=`<div style="font-weight:850;margin-top:16px">Pagamentos confirmados</div><div class="payment-list">${list.map(x=>`<div class="payment-item"><div><b>${fmt(x.amountCents)}</b><br><small>${new Date(x.paidAt).toLocaleString('pt-BR')}${x.note?` · ${escapeHtml(x.note)}`:''}</small></div><button class="btn small danger" data-delete-payment="${x.id}">Excluir</button></div>`).join('')}</div>`;
+    el.querySelectorAll('[data-delete-payment]').forEach(b=>b.addEventListener('click',async()=>{
+      if(confirm('Excluir este pagamento confirmado? O valor das parcelas permanecerá inalterado.')){
+        const before=clone(state);
+        state.payments=state.payments.filter(x=>x.id!==b.dataset.deletePayment);
+        if(!(await persistState())){ state=before; render(); return; }
+        const calc=computePlan(state); document.getElementById('paymentAmount').value=centsInput(Math.max(0,getPlanValue(calc,pid,mid)-paymentCellTotal(state,pid,mid))); renderPaymentHistory(pid,mid); render();
+      }
+    }));
+  }
+
+  async function savePayment(){
+    const pid=document.getElementById('paymentParticipantId').value, mid=document.getElementById('paymentMonthId').value;
+    const amount=toCents(document.getElementById('paymentAmount').value); const note=document.getElementById('paymentNote').value.trim();
+    if(amount<=0){alert('Informe um valor maior que zero.');return;}
+    const before=clone(state);
+    state.payments.push({id:uid('pay'),participantId:pid,monthId:mid,amountCents:amount,paidAt:new Date().toISOString(),note});
+    if(!(await persistState())){ state=before; render(); return; }
+    document.getElementById('paymentDialog').close(); render();
+  }
+
+  async function saveSettings(){
+    const total=toCents(document.getElementById('cfgTotal').value), cap=Math.round(Number(document.getElementById('cfgCapacity').value));
+    if(total<=0){alert('Informe um valor total válido.');return;} if(!cap||cap<activeParticipants().length){alert(`A capacidade não pode ser menor que os ${activeParticipants().length} participantes atuais.`);return;}
+    const dues={}; document.querySelectorAll('[data-month-due]').forEach(i=>dues[i.dataset.monthDue]=toCents(i.value));
+    const sum=Object.values(dues).reduce((a,b)=>a+b,0);
+    if(sum!==total){alert(`A soma dos meses (${fmt(sum)}) precisa ser exatamente igual ao valor total (${fmt(total)}).`);return;}
+    if(state.payments.length && !confirm('Já existem pagamentos registrados. Salvar estas configurações recalculará todos os saldos e parcelas futuras. Continuar?')) return;
+    const before=clone(state);
+    state.apartment.totalCents=total; state.apartment.capacity=cap; state.months.forEach(m=>m.dueCents=dues[m.id]);
+    if(!(await persistState())){ state=before; render(); return; }
+    render(); alert('Configurações salvas.');
+  }
+
+  function exportBackup(){
+    const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a');
+    a.href=url; a.download=`backup-rateio-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url);
+  }
+
+  function importBackup(file){
+    const reader=new FileReader(); reader.onload=async()=>{
+      try{
+        const incoming=normalizeState(JSON.parse(reader.result));
+        if(!confirm('Importar este backup substituirá os dados atuais do grupo compartilhado. Continuar?')) return;
+        const before=clone(state); state=incoming;
+        if(!(await persistState())){ state=before; render(); return; }
+        render(); alert('Backup importado com sucesso.');
+      } catch(e){alert('Arquivo de backup inválido.');}
+    }; reader.readAsText(file);
+  }
+
+
+  document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===btn));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active')); document.getElementById(`panel-${btn.dataset.tab}`).classList.add('active');
+  }));
+  document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>document.getElementById(b.dataset.close).close()));
+  document.getElementById('btnAddParticipant').addEventListener('click',()=>openParticipantDialog());
+  document.getElementById('btnSimulateParticipant').addEventListener('click',simulateParticipant);
+  document.getElementById('btnSaveParticipant').addEventListener('click',saveParticipant);
+  document.getElementById('btnDeleteParticipant').addEventListener('click',deleteParticipant);
+  document.getElementById('btnSavePayment').addEventListener('click',savePayment);
+  document.getElementById('btnSaveSettings').addEventListener('click',saveSettings);
+  document.getElementById('btnExport').addEventListener('click',exportBackup);
+  document.getElementById('btnImport').addEventListener('click',()=>document.getElementById('fileImport').click());
+  document.getElementById('fileImport').addEventListener('change',e=>{if(e.target.files[0]) importBackup(e.target.files[0]); e.target.value='';});
+  document.getElementById('btnReset').addEventListener('click',async()=>{
+    if(confirm('Isso substituirá participantes, pagamentos e configurações do grupo compartilhado pelo cenário padrão. Continuar?')){
+      const before=clone(state); state=defaultState();
+      if(!(await persistState())){ state=before; render(); return; }
+      render();
+    }
+  });
+  document.getElementById('btnMagicLink').addEventListener('click',sendMagicLink);
+  document.getElementById('authEmail').addEventListener('keydown',e=>{if(e.key==='Enter')sendMagicLink();});
+  document.getElementById('btnLogout').addEventListener('click',signOut);
+  document.getElementById('participantStart').addEventListener('change',()=>document.getElementById('simulationArea').classList.add('hidden'));
+  document.getElementById('participantEnd').addEventListener('change',()=>document.getElementById('simulationArea').classList.add('hidden'));
+  document.getElementById('participantName').addEventListener('input',()=>document.getElementById('simulationArea').classList.add('hidden'));
+
+  initializeApp();
+})();
+</script>
+</body>
+</html>
